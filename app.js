@@ -40,23 +40,26 @@ app.register('._', {
 
 // Route middleware
 
-function loadImages(req, res, next) {
+function loadImages(req, res, next){
   var dir = './public/images';
 
   fs.readdir(dir, function(err, files){
     if (err) throw err;
     
     var images = [];
-    files.forEach(function(f) {
+    files.forEach(function(f){
       var path = dir + '/' + f;
-      im.identify(path, function(err, features) {
+
+      console.log(path);
+      im.identify(path, function(err, features){
         if (err) throw err;
 
         console.log(features);
       });
     });
 
-    req.images = images;
+    req.images = JSON.stringify(images);
+    console.log(req.images);
   });
 
   next();
@@ -64,12 +67,12 @@ function loadImages(req, res, next) {
 
 // Routes
 
-app.get('/', loadImages, function(req, res){
-  res.render('index', { images: req.images });
+app.get('/', function(req, res){
+  res.render('index');
 });
 
-app.get('/image/:filename', function(req, res){
-  res.render('image', { filename: filename });
+app.get('/images', loadImages, function(req, res){
+  res.send(req.images);
 });
 
 app.listen(3000);
