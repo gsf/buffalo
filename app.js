@@ -1,10 +1,10 @@
 
-/**
- * Module dependencies.
- */
+// Module dependencies.
 
 var express = require('express')
-  , routes = require('./routes');
+  , fs      = require('fs')
+  , im      = require('imagemagick')
+  , _       = require('underscore');
 
 var app = module.exports = express.createServer();
 
@@ -12,7 +12,7 @@ var app = module.exports = express.createServer();
 
 app.configure(function(){
   app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
+  app.set('view engine', '_');
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(require('stylus').middleware({ src: __dirname + '/public' }));
@@ -28,22 +28,48 @@ app.configure('production', function(){
   app.use(express.errorHandler());
 });
 
-var images = [
-    { id: 1, filename: '1.jpg' }
-  , { id: 2, filename: '2.jpg' }
-  , { id: 3, filename: '3.jpg' }
-  , { id: 4, filename: '4.jpg' }
-  , { id: 5, filename: '5.jpg' }
-];
+app.register('._', {
+  compile: function(str, options) {
+    var template = _.template(str);
+
+    return function(locals) {
+      return template(locals);
+    };
+  }
+});
+
+// Route middleware
+
+function loadImages(req, res, next) {
+  var dir = './public/images';
+
+  fs.readdir(dir, function(err, files){
+    if (err) throw err;
+    
+    var images = [];
+    files.forEach(function(f) {
+      var path = dir + '/' + f;
+      im.identify(path, function(err, features) {
+        if (err) throw err;
+
+        console.log(features);
+      });
+    });
+
+    req.images = images;
+  });
+
+  next();
+}
 
 // Routes
 
-app.get('/', function(req, res){
-  res.render('index', { images: images })
+app.get('/', loadImages, function(req, res){
+  res.render('index', { images: req.images });
 });
 
-app.get('/image/:id', function(req, res){
-  res.render('image', { images: images })
+app.get('/image/:filename', function(req, res){
+  res.render('image', { filename: filename });
 });
 
 app.listen(3000);
