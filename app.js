@@ -1,5 +1,5 @@
 
-// Module dependencies.
+// Module dependencies
 
 var express = require('express')
   , fs      = require('fs')
@@ -49,17 +49,25 @@ function loadImages(req, res, next){
     var images = [];
     files.forEach(function(f){
       var path = dir + '/' + f;
-
-      console.log(path);
       im.identify(path, function(err, features){
-        if (err) throw err;
+        if (features){
+          images.push(f);
+        }
 
-        console.log(features);
+        images.forEach(function(i){
+          var path = dir + '/' + i;
+          console.log(path);
+          im.readMetadata(path, function(err, meta){
+            if (meta.exif){
+              console.log('Shot at '+ meta.exif.dateTimeOriginal);
+            }
+          });
+        });
       });
     });
 
     req.images = JSON.stringify(images);
-    console.log(req.images);
+    // console.log(req.images);
   });
 
   next();
