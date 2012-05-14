@@ -3,19 +3,16 @@
 
 var express = require('express')
   , fs      = require('fs')
-  , im      = require('imagemagick')
-  , _       = require('underscore');
+  , im      = require('imagemagick');
 
 var app = module.exports = express.createServer();
 
 // Configuration
 
-app.configure(function() {
-  app.set('views', __dirname + '/views');
-  app.set('view engine', '_');
-  app.use(express.bodyParser());
+app.configure(function(){
   app.use(express.methodOverride());
   app.use(require('stylus').middleware({ src: __dirname + '/public' }));
+  app.use('/', express.static(__dirname + '/views'));
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
 });
@@ -26,16 +23,6 @@ app.configure('development', function() {
 
 app.configure('production', function() {
   app.use(express.errorHandler());
-});
-
-app.register('._', {
-  compile: function(str, options) {
-    var template = _.template(str);
-
-    return function(locals) {
-      return template(locals);
-    };
-  }
 });
 
 function loadImages(req, res) {
@@ -74,10 +61,6 @@ function sendImages(req, res, imageMeta) {
 }
 
 // Routes
-
-app.get('/', function(req, res) {
-  res.render('index');
-});
 
 app.get('/images', function(req, res) {
   loadImages(req, res);
