@@ -2,26 +2,32 @@ $(window).load(function() {
 
   var ItemView = Backbone.View.extend({
     initialize: function() {
-      console.log(this.options.argo);
+      this.render( this.options.data );
+    },
+    render: function( data ) {
+      var template = _.template($('#item-template').html())(data);
+      console.log( data );
+      this.$el.append( template );
     }
   });
 
-  // var item = new ItemView({
-  //   argo: "blah",
-  // });
-
   var Mesa = function() {
-    //console.log('new Mesa.')
+    this.itemsData = loadJson('/fake-data/items.html');
+    this.itemsArray = [];
 
-    console.log( loadJson('/fake-data/items.html') );
+    for(i in this.itemsData) {
+      var item = new ItemView({
+        el: $('#item-container'),
+        data: this.itemsData[i],
+      });
 
-    this.item1 = new ItemView({
-      argo: "blah",
-    });
+      this.itemsArray.push(item);
+    }
+
+    //console.log(this.itemsArray[0]['options']['data'])
 
     function loadJson( targetURL ) {
       var dataRequested;
-
       $.ajax({
         url: targetURL,
         async: false,
@@ -35,7 +41,6 @@ $(window).load(function() {
       });
       return dataRequested;
     } // loadData
-
   }
 
   window.mesa = new Mesa();
