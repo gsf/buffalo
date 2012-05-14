@@ -11,13 +11,12 @@ var app = module.exports = express.createServer();
 // Configuration
 
 app.configure(function(){
-  app.set('views', __dirname + '/views');
-  app.set('view engine', '_');
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(require('stylus').middleware({ src: __dirname + '/public' }));
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
+  app.use('/', express.static(__dirname + '/views'))
 });
 
 app.configure('development', function(){
@@ -28,7 +27,7 @@ app.configure('production', function(){
   app.use(express.errorHandler());
 });
 
-app.register('._', {
+/*app.register('._', {
   compile: function(str, options) {
     var template = _.template(str);
 
@@ -36,7 +35,7 @@ app.register('._', {
       return template(locals);
     };
   }
-});
+});*/
 
 // Route middleware
 
@@ -45,7 +44,7 @@ function loadImages(req, res, next){
 
   fs.readdir(dir, function(err, files){
     if (err) throw err;
-    
+
     var images = [];
     files.forEach(function(f){
       var path = dir + '/' + f;
@@ -67,9 +66,14 @@ function loadImages(req, res, next){
 
 // Routes
 
+/*
 app.get('/', function(req, res){
-  res.render('index');
+  fs.readFile('/views/layout.html', function(err, data) {
+    if (err) throw err;
+    res.send(data);
+  })
 });
+*/
 
 app.get('/images', loadImages, function(req, res){
   res.send(req.images);
