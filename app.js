@@ -1,82 +1,69 @@
 
-// Module dependencies.
+// Module dependencies
 
 var express = require('express')
   , fs      = require('fs')
-  , im      = require('imagemagick')
-  , _       = require('underscore');
+  , im      = require('imagemagick');
 
 var app = module.exports = express.createServer();
 
 // Configuration
 
 app.configure(function(){
-  app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(require('stylus').middleware({ src: __dirname + '/public' }));
+  app.use('/', express.static(__dirname + '/views'));
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
-  app.use('/', express.static(__dirname + '/views'))
 });
 
-app.configure('development', function(){
+app.configure('development', function() {
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
-app.configure('production', function(){
+app.configure('production', function() {
   app.use(express.errorHandler());
 });
 
-/*app.register('._', {
-  compile: function(str, options) {
-    var template = _.template(str);
-
-    return function(locals) {
-      return template(locals);
-    };
-  }
-});*/
-
-// Route middleware
-
-function loadImages(req, res, next){
+function loadImages(req, res) {
   var dir = './public/images';
+  var imageMeta = {images: []};
 
-  fs.readdir(dir, function(err, files){
+  fs.readdir(dir, function(err, files) {
     if (err) throw err;
+    var pending = files.length;
 
-    var images = [];
-    files.forEach(function(f){
+    files.forEach(function(f) {
       var path = dir + '/' + f;
 
-      console.log(path);
-      im.identify(path, function(err, features){
-        if (err) throw err;
+      im.identify(path, function(err, features) {
+        if (err) return pending--;
 
-        console.log(features);
+        im.readMetadata(path, function(err, meta) {
+          if (err) throw err;
+          if (meta.exif) {
+            imageMeta.images.push({name: f, date: meta.exif.dateTimeOriginal});
+            console.log(imageMeta);
+          }
+          --pending || sendImages(req, res, imageMeta);
+        });
       });
     });
+  });
+}
 
-    req.images = JSON.stringify(images);
-    console.log(req.images);
+function sendImages(req, res, imageMeta) {
+  imageMeta.images.sort(function(a,b) {
+    return a.date - b.date;
   });
 
-  next();
+  res.send(JSON.stringify(imageMeta));
 }
 
 // Routes
 
-/*
-app.get('/', function(req, res){
-  fs.readFile('/views/layout.html', function(err, data) {
-    if (err) throw err;
-    res.send(data);
-  })
-});
-*/
-
-app.get('/images', loadImages, function(req, res){
-  res.send(req.images);
+app.get('/images', function(req, res) {
+  loadImages(req, res);
 });
 
 app.listen(3000);
