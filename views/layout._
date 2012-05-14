@@ -2,11 +2,26 @@
   <head>
     <title>Miles Buffalo Gilbert</title>
     <link rel="stylesheet" href="/stylesheets/style.css" />
+
+    <script src="/javascripts/jquery.js"></script>
+    <script src="/javascripts/underscore.js"></script>
+    <script src="/javascripts/backbone.js"></script>
+
+
+    <script src="/javascripts/main.js"></script>
   </head>
   <body>
     <noscript>
       <a href="/nojs">No javascript?</a>
     </noscript>
     <%= body %>
+
+    !!!
+
+    <script type="text/template" id ="item-template">
+      Hello.
+    </script>
+
+
   </body>
 </html>
