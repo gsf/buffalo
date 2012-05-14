@@ -10,7 +10,7 @@ var app = module.exports = express.createServer();
 
 // Configuration
 
-app.configure(function(){
+app.configure(function() {
   app.set('views', __dirname + '/views');
   app.set('view engine', '_');
   app.use(express.bodyParser());
@@ -20,11 +20,11 @@ app.configure(function(){
   app.use(express.static(__dirname + '/public'));
 });
 
-app.configure('development', function(){
+app.configure('development', function() {
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
-app.configure('production', function(){
+app.configure('production', function() {
   app.use(express.errorHandler());
 });
 
@@ -38,49 +38,49 @@ app.register('._', {
   }
 });
 
-// Route middleware
-
-function loadImages(req, res, next){
+function loadImages(req, res) {
   var dir = './public/images';
+  var imageMeta = {images: []};
 
-  fs.readdir(dir, function(err, files){
+  fs.readdir(dir, function(err, files) {
     if (err) throw err;
-    
-    var images = [];
-    files.forEach(function(f){
-      var path = dir + '/' + f;
-      im.identify(path, function(err, features){
-        if (features){
-          images.push(f);
-        }
+    var pending = files.length;
 
-        images.forEach(function(i){
-          var path = dir + '/' + i;
-          console.log(path);
-          im.readMetadata(path, function(err, meta){
-            if (meta.exif){
-              console.log('Shot at '+ meta.exif.dateTimeOriginal);
-            }
-          });
+    files.forEach(function(f) {
+      var path = dir + '/' + f;
+
+      im.identify(path, function(err, features) {
+        if (err) return pending--;
+
+        im.readMetadata(path, function(err, meta) {
+          if (err) throw err;
+          if (meta.exif) {
+            imageMeta.images.push({name: f, date: meta.exif.dateTimeOriginal});
+            console.log(imageMeta);
+          }
+          --pending || sendImages(req, res, imageMeta);
         });
       });
     });
+  });
+}
 
-    req.images = JSON.stringify(images);
-    // console.log(req.images);
+function sendImages(req, res, imageMeta) {
+  imageMeta.images.sort(function(a,b) {
+    return a.date - b.date;
   });
 
-  next();
+  res.send(JSON.stringify(imageMeta));
 }
 
 // Routes
 
-app.get('/', function(req, res){
+app.get('/', function(req, res) {
   res.render('index');
 });
 
-app.get('/images', loadImages, function(req, res){
-  res.send(req.images);
+app.get('/images', function(req, res) {
+  loadImages(req, res);
 });
 
 app.listen(3000);
