@@ -6,14 +6,14 @@
     <script src="/javascripts/jquery.js"></script>
     <script src="/javascripts/underscore.js"></script>
     <script src="/javascripts/backbone.js"></script>
+    <script src="/javascripts/moment.min.js"></script>
 
     <script src="/javascripts/main.js"></script>
 
     <script type="text/template" id="item-template">
-      <div class ="mesa-item">
-        <h2>This is an item</h2>
+      <div class ="mesa-item <%= modifier %>" id=<%= id %>>
         <h4><%= date %></h4>
-        <img src=<%= path %> />
+        <img src=<%= name %> />
       </div>
     </script>
 
@@ -29,7 +29,5 @@
     <div id="item-container">
 
     </div>
-
-
   </body>
 </html>

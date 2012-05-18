@@ -1,30 +1,82 @@
 $(window).load(function() {
 
+  window.isLoading = false;
+
   var ItemView = Backbone.View.extend({
+    newId: 0,
     initialize: function() {
-      this.render( this.options.data );
+      var rand = Math.floor((Math.random()*3)+1);
+      this.newId = moment(this.options.data.date).format('hmmss');
+
+      var data = {
+        // convert timestamp to something nice looking:
+        date: moment(this.options.data.date).format('MMM Do YYYY'),
+        name: '/images/' + this.options.data.name,
+        modifier: (rand == 1 ? 'two-up' : 'normal'),
+        id: this.newId
+      }
+      this.render( data );
     },
     render: function( data ) {
       var template = _.template($('#item-template').html())(data);
-      console.log( data );
       this.$el.append( template );
+      $('#'+this.newId).animate({opacity: 1}, 1000);
     }
   });
 
   var Mesa = function() {
-    this.itemsData = loadJson('/fake-data/items.html');
+    this.itemsData = loadJson('/images/');
+    this.itemsLength = this.itemsData.images.length;
     this.itemsArray = [];
+    this.pageLength = 2;
+    this.currentPage = 0;
+    this.pageCount = Math.round(this.itemsLength / this.pageLength) -1;
 
-    for(i in this.itemsData) {
-      var item = new ItemView({
-        el: $('#item-container'),
-        data: this.itemsData[i],
-      });
+    this.loadPage = function() {
+      console.log(this.currentPage)
+      if(this.currentPage < this.pageCount+1) {
+        for(var i = 0; i < this.pageLength; i ++) {
+          var item = new ItemView({
+            el: $('#item-container'),
+            data: this.itemsData['images'][this.pageLength * this.currentPage + i],
+          });
 
-      this.itemsArray.push(item);
+          this.itemsArray.push(item);
+        }
+
+        this.currentPage++;
+        var t = window.setTimeout( "window.isLoading = false", 2000);
+
+      } else if(this.currentPage == this.pageCount +1) {
+        console.log('last page')
+        var bitch = (this.pageLength * this.pageCount-1) - this.itemsLength;
+
+        for(var i = 0; i < bitch; i++) {
+           var item = new ItemView({
+            el: $('#item-container'),
+            data: this.itemsData['images'][this.pageLength * this.currentPage + i],
+          });
+
+          this.itemsArray.push(item);
+        }
+
+        this.currentPage++;
+      } else if(this.currentPage > this.pageCount) {
+        console.log('nope')
+      }
     }
 
-    //console.log(this.itemsArray[0]['options']['data'])
+    this.loadPage();
+
+    $(window).bind('scroll', function() {
+      //console.log($(window).height() + $(window).scrollTop() - $('#item-container').outerHeight(true)  )
+      if( $(window).height() + $(window).scrollTop() - $('#item-container').outerHeight(true) > 0){
+        if(!window.isLoading) {
+          window.isLoading = true;
+          mesa.loadPage();
+        }
+      }
+    })
 
     function loadJson( targetURL ) {
       var dataRequested;
