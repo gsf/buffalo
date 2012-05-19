@@ -28,7 +28,7 @@ $(window).load(function() {
     this.itemsData = loadJson('/images/');
     this.itemsLength = this.itemsData.images.length;
     this.itemsArray = [];
-    this.pageLength = 2;
+    this.pageLength = 2; // how many images are loaded at a time
     this.currentPage = 0;
     this.pageCount = Math.round(this.itemsLength / this.pageLength) -1;
 
@@ -43,15 +43,13 @@ $(window).load(function() {
 
           this.itemsArray.push(item);
         }
-
         this.currentPage++;
-        var t = window.setTimeout( "window.isLoading = false", 2000);
-
+        var t = window.setTimeout( "window.isLoading = false", 1500);
       } else if(this.currentPage == this.pageCount +1) {
         console.log('last page')
-        var bitch = (this.pageLength * this.pageCount-1) - this.itemsLength;
+        var lastItems = (this.pageLength * this.pageCount-1) - this.itemsLength;
 
-        for(var i = 0; i < bitch; i++) {
+        for(var i = 0; i < lastItems; i++) {
            var item = new ItemView({
             el: $('#item-container'),
             data: this.itemsData['images'][this.pageLength * this.currentPage + i],
@@ -70,7 +68,7 @@ $(window).load(function() {
 
     $(window).bind('scroll', function() {
       //console.log($(window).height() + $(window).scrollTop() - $('#item-container').outerHeight(true)  )
-      if( $(window).height() + $(window).scrollTop() - $('#item-container').outerHeight(true) > 0){
+      if( $(window).height() + $(window).scrollTop() - $('#item-container').outerHeight(true) > -30){
         if(!window.isLoading) {
           window.isLoading = true;
           mesa.loadPage();
