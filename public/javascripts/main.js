@@ -5,7 +5,7 @@ $(window).load(function() {
   var ItemView = Backbone.View.extend({
     newId: 0,
     initialize: function() {
-      var rand = Math.floor((Math.random()*3)+1);
+      var rand = Math.floor((Math.random()*4)+1);
       this.newId = moment(this.options.data.date).format('hmmss');
 
       var data = {

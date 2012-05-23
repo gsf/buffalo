@@ -53,7 +53,7 @@ function loadImages(req, res) {
 
 function sendImages(req, res, imageMeta) {
   imageMeta.images.sort(function(a,b) {
-    return b.date - a.date;
+    return a.date - b.date;
   });
 
   res.send(JSON.stringify(imageMeta));
