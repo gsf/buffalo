@@ -3,7 +3,9 @@
 
 var express = require('express')
   , fs      = require('fs')
-  , im      = require('imagemagick');
+  , im      = require('imagemagick')
+  , redis   = require('redis-url').connect(process.env.REDISTOGO_URL)
+  , dropbox = require('dropbox').DropboxClient;
 
 var app = module.exports = express.createServer();
 
@@ -24,30 +26,53 @@ app.configure('production', function() {
   app.use(express.errorHandler());
 });
 
-function loadImages(req, res) {
-  var dir = './public/images';
-  var imageMeta = {images: []};
+function loadParams(req, res) {
+  var redisKeys = ['key', 'secret', 'username', 'password'];
+  var pending = redisKeys.length
+  var dropboxParams = [];
 
-  fs.readdir(dir, function(err, files) {
-    if (err) throw err;
-    var pending = files.length;
-
-    files.forEach(function(f) {
-      var path = dir + '/' + f;
-
-      im.identify(path, function(err, features) {
-        if (err) return pending--;
-
-        im.readMetadata(path, function(err, meta) {
-          if (err) throw err;
-          if (meta.exif) {
-            imageMeta.images.push({name: f, date: meta.exif.dateTimeOriginal});
-            console.log(imageMeta);
-          }
-          --pending || sendImages(req, res, imageMeta);
-        });
-      });
+  redisKeys.forEach(function(key) {
+    redis.get(key, function(err, value) {
+      dropboxParams[key] = value;
+      --pending || loadImages(req, res, dropboxParams);
     });
+  });
+}
+
+function loadImages(req, res, params) {
+  console.log(params);
+
+  var path = '/MBG';
+  var imageMeta = {images: []};
+  var MBG = new dropbox(params.key, params.secret);
+  
+  MBG.getAccessToken(params.username, params.password, function (err, token, secret) {
+    if (err) throw err;
+
+    // MBG.getMetadata(path, function(err, metadata) {
+    //   if (err) throw err;
+
+    //   console.log(metadata);
+
+    //   // var pending = files.length;
+
+    //   // files.forEach(function(f) {
+    //   //   var path = dir + '/' + f;
+
+    //   //   im.identify(path, function(err, features) {
+    //   //     if (err) return pending--;
+
+    //   //     im.readMetadata(path, function(err, meta) {
+    //   //       if (err) throw err;
+    //   //       if (meta.exif && meta.exif.dateTimeOriginal) {
+    //   //         imageMeta.images.push({name: f, date: meta.exif.dateTimeOriginal});
+    //   //         // console.log(imageMeta);
+    //   //       }
+    //   //       --pending || sendImages(req, res, imageMeta);
+    //   //     });
+    //   //   });
+    //   // });
+    // });
   });
 }
 
@@ -62,7 +87,7 @@ function sendImages(req, res, imageMeta) {
 // Routes
 
 app.get('/images', function(req, res) {
-  loadImages(req, res);
+  loadParams(req, res);
 });
 
 app.listen(process.env.PORT || 3000);
