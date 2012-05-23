@@ -11,7 +11,6 @@ var app = module.exports = express.createServer();
 
 app.configure(function(){
   app.use(express.methodOverride());
-  app.use(require('stylus').middleware({ src: __dirname + '/public' }));
   app.use('/', express.static(__dirname + '/views'));
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
@@ -54,7 +53,7 @@ function loadImages(req, res) {
 
 function sendImages(req, res, imageMeta) {
   imageMeta.images.sort(function(a,b) {
-    return a.date - b.date;
+    return b.date - a.date;
   });
 
   res.send(JSON.stringify(imageMeta));
