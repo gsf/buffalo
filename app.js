@@ -2,8 +2,11 @@
 // Module dependencies
 
 var express = require('express')
-  , fs      = require('fs')
-  , im      = require('imagemagick');
+  , awssum  = require('awssum')
+  , url     = require('url');
+
+var inspect = require('eyes').inspector();
+var ExifImage = require('exif').ExifImage;
 
 var app = module.exports = express.createServer();
 
@@ -25,28 +28,25 @@ app.configure('production', function() {
 });
 
 function loadImages(req, res) {
-  var dir = './public/images';
+  var amazon = awssum.load('amazon/amazon');
+  var S3 = awssum.load('amazon/s3').S3;
+  var s3 = new S3({
+      'accessKeyId' : process.env.ACCESS_KEY_ID,
+      'secretAccessKey' : process.env.SECRET_ACCESS_KEY,
+      'region' : amazon.US_EAST_1
+  });
+  var bucket = 'milesbuffalo';
+
+  var options = {
+      BucketName : bucket,
+  };
+
   var imageMeta = {images: []};
-
-  fs.readdir(dir, function(err, files) {
-    if (err) throw err;
-    var pending = files.length;
-
-    files.forEach(function(f) {
-      var path = dir + '/' + f;
-
-      im.identify(path, function(err, features) {
-        if (err) return pending--;
-
-        im.readMetadata(path, function(err, meta) {
-          if (err) throw err;
-          if (meta.exif) {
-            imageMeta.images.push({name: f, date: meta.exif.dateTimeOriginal});
-            console.log(imageMeta);
-          }
-          --pending || sendImages(req, res, imageMeta);
-        });
-      });
+  s3.ListObjects(options, function(err, data) {
+    var pending = data.Body.ListBucketResult.Contents.length;
+    data.Body.ListBucketResult.Contents.forEach(function(item) {
+      imageMeta.images.push({name: item.Key, date: ''});
+      --pending || sendImages(req, res, imageMeta);
     });
   });
 }
