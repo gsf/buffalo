@@ -11,7 +11,7 @@ $(window).load(function() {
       var data = {
         // convert timestamp to something nice looking:
         date: moment(this.options.data.date).format('MMM Do YYYY'),
-        name: '/images/' + this.options.data.name,
+        name: 'https://s3.amazonaws.com/milesbuffalo/' + this.options.data.name,
         modifier: (rand == 1 ? 'two-up' : 'normal'),
         id: this.newId
       }
