@@ -3,9 +3,11 @@
 
 var express = require('express')
   , awssum  = require('awssum')
-  , url     = require('url');
+  , url     = require('url')
+  , https   = require('https');
 
 var inspect = require('eyes').inspector();
+
 var ExifImage = require('exif').ExifImage;
 
 var app = module.exports = express.createServer();
@@ -31,11 +33,12 @@ function loadImages(req, res) {
   var amazon = awssum.load('amazon/amazon');
   var S3 = awssum.load('amazon/s3').S3;
   var s3 = new S3({
-      'accessKeyId' : process.env.ACCESS_KEY_ID,
-      'secretAccessKey' : process.env.SECRET_ACCESS_KEY,
-      'region' : amazon.US_EAST_1
+    'accessKeyId' : process.env.ACCESS_KEY_ID,
+    'secretAccessKey' : process.env.SECRET_ACCESS_KEY,
+    'region' : amazon.US_EAST_1
   });
   var bucket = 'milesbuffalo';
+  var path = 'https://s3.amazonaws.com/milesbuffalo/'
 
   var options = {
       BucketName : bucket,
@@ -45,7 +48,7 @@ function loadImages(req, res) {
   s3.ListObjects(options, function(err, data) {
     var pending = data.Body.ListBucketResult.Contents.length;
     data.Body.ListBucketResult.Contents.forEach(function(item) {
-      imageMeta.images.push({name: item.Key, date: ''});
+      imageMeta.images.push({name: item.Key, date: 'May 25, 2011'});
       --pending || sendImages(req, res, imageMeta);
     });
   });
